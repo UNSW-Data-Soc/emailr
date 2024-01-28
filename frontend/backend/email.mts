@@ -44,5 +44,5 @@ export default async (req: Request) => {
     });
   });
 
-  return new Response("Hello World");
+  return Response.json({ message: "Emails sent" });
 };
