@@ -7,37 +7,18 @@ const fillEmailWithCsvData = (emailHTML, csvData) => {
 };
 
 // nodemailer
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 // convert html to text
-const { convert: htmlToText } = require("html-to-text");
+import { convert as htmlToText } from "html-to-text";
 const options = {
   wordwrap: 130,
   // ...
 };
 
-// express server
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-
-const app = express();
-const PORT = 8000;
-
-// * MIDDLEWARE
-// parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }));
-// parse application/json
-app.use(bodyParser.json());
-app.use(cors());
-
-app.get("/", (req, res) => {
-  res.status(200).send("Hello World");
-});
-
-app.post("/email", (req, res) => {
-  console.log(req.body);
-  const { fromName, subject, fromEmail, html, csvData, emailCol, fromPassword } = req.body;
+export default async (req: Request) => {
+  const json = await req.json();
+  const { fromName, subject, fromEmail, html, csvData, emailCol, fromPassword } = json;
   const csv = csvData;
 
   const transportOptions = {
@@ -63,12 +44,5 @@ app.post("/email", (req, res) => {
     });
   });
 
-  res.status(200).json({ message: "sent" });
-});
-
-app.listen(PORT, (error) => {
-  if (error) {
-    console.log(error);
-  }
-  console.log(`Server is running on port ${PORT}`);
-});
+  return new Response("Hello World");
+};
