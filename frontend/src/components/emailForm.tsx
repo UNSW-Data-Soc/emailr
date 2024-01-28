@@ -293,7 +293,7 @@ export default function EmailForm() {
             if (!csv) return alert("Please upload a CSV file");
             if (!emailForm.formState.isValid) return alert("Please fill in the email settings");
 
-            fetch(`${import.meta.env.VITE_BACKEND_URL}/email`, {
+            fetch(`/.netlify/functions/email`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
