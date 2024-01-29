@@ -39,7 +39,7 @@ const emailFormSchema = z.object({
 
 // replace all {{name}} with csv data
 const fillEmailWithCsvData = (emailHTML: string, csvData: Record<string, string>): string => {
-  const emailHTMLWithCsvData = emailHTML.replace(/{{(.*?)}}/g, (match, p1) => {
+  const emailHTMLWithCsvData = emailHTML.replace(/{{(.*?)}}/g, (match, p1: string) => {
     return csvData[p1] || match;
   });
   return emailHTMLWithCsvData;
@@ -97,9 +97,11 @@ export default function EmailForm() {
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl mx-auto">
-      <div className="flex flex-row gap-4">
-        <img src="/datasoclogoonly.png" height="60px" width="60px" />
-        <h1 className="font-bold text-6xl tracking-tight">DataSoc CSV Emailer</h1>
+      <div className="flex flex-row gap-4 items-center justify-center">
+        <img className="hidden sm:block" src="/datasoclogoonly.png" height="60px" width="60px" />
+        <h1 className="font-bold text-4xl sm:text-5xl md:text-6xl tracking-tight">
+          DataSoc CSV Emailer
+        </h1>
       </div>
 
       {/* csv file dropzone */}
@@ -136,7 +138,7 @@ export default function EmailForm() {
           </div>
           {!Object.keys(csvData[0]).includes(emailKey) && (
             <p className="text-red-600 py-2">
-              Select the column name that contains the recipients' emails.
+              Select the column name that contains the recipients&apos; emails.
             </p>
           )}
           {Object.keys(csvData[0]).includes(emailKey) && (
@@ -320,6 +322,7 @@ export default function EmailForm() {
       </Section>
 
       <div className="flex justify-center flex-row">
+        {/* TODO: confirm dialog using shadcn-alert-dialog */}
         <Button
           className="text-xl flex flex-row gap-2"
           onClick={() => {
@@ -352,6 +355,9 @@ export default function EmailForm() {
               .catch((err) => {
                 console.error(err);
                 alert("Error sending emails");
+              })
+              .finally(() => {
+                // TODO: cleanup states
               });
           }}
         >
@@ -388,7 +394,7 @@ function CSVDropzone({ setCsv }: CSVDropzoneProps) {
       {isDragActive ? (
         <p>Drop the {CSVLabel} file here ...</p>
       ) : (
-        <p>Drag 'n' drop a {CSVLabel} file here, or click to select a file</p>
+        <p>Drag &apos;n&apos; drop a {CSVLabel} file here, or click to select a file</p>
       )}
     </div>
   );
