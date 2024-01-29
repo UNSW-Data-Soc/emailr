@@ -13,7 +13,15 @@ import { Context } from "@ckeditor/ckeditor5-core";
 import { Bold, Italic } from "@ckeditor/ckeditor5-basic-styles";
 import { Essentials } from "@ckeditor/ckeditor5-essentials";
 import { Paragraph } from "@ckeditor/ckeditor5-paragraph";
-import { Link } from "@ckeditor/ckeditor5-link";
+import { Link, LinkImage } from "@ckeditor/ckeditor5-link";
+import {
+  Image,
+  ImageCaption,
+  ImageResize,
+  ImageStyle,
+  ImageToolbar,
+  ImageInsertViaUrl,
+} from "@ckeditor/ckeditor5-image";
 import { Button } from "./ui/button";
 import { ArrowLeftIcon, ArrowRightIcon, SendIcon } from "lucide-react";
 import { Carousel, CarouselApi, CarouselContent, CarouselItem } from "./ui/carousel";
@@ -24,7 +32,7 @@ const CSVLabel = <code className="bg-muted px-2 py-1 rounded-md">.csv</code>;
 
 const emailFormSchema = z.object({
   fromName: z.string().min(1).default("UNSW DataSoc"),
-  fromEmail: z.string().email().default("hello@unswdata.com"),
+  fromEmail: z.string().trim().email().default("hello@unswdata.com"),
   subject: z.string().min(1).default("Hello from DataSoc!"),
   password: z.string().min(1),
 });
@@ -89,7 +97,10 @@ export default function EmailForm() {
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl mx-auto">
-      <h1 className="font-bold text-6xl tracking-tight">DataSoc CSV Emailer</h1>
+      <div className="flex flex-row gap-4">
+        <img src="/datasoclogoonly.png" height="60px" width="60px" />
+        <h1 className="font-bold text-6xl tracking-tight">DataSoc CSV Emailer</h1>
+      </div>
 
       {/* csv file dropzone */}
       <CSVDropzone setCsv={setCsv} />
@@ -208,24 +219,43 @@ export default function EmailForm() {
             editor={ClassicEditor}
             data={defaultEmail}
             config={{
-              plugins: [Essentials, Paragraph, Bold, Italic, Link],
+              plugins: [
+                Essentials,
+                Paragraph,
+                Bold,
+                Italic,
+                Link,
+                Image,
+                ImageToolbar,
+                ImageCaption,
+                ImageStyle,
+                ImageResize,
+                LinkImage,
+                ImageInsertViaUrl,
+              ],
               toolbar: {
                 items: [
                   "undo",
                   "redo",
                   "|",
-                  "heading",
-                  "|",
                   "bold",
                   "italic",
                   "|",
                   "link",
+                  "|",
+                  "insertImage",
                   // "|",
                   // "bulletedList",
                   // "numberedList",
                   // "outdent",
                   // "indent",
                 ],
+              },
+              image: {
+                insert: {
+                  integrations: ["url"],
+                  type: "inline",
+                },
               },
             }}
             onReady={(editor) => {
@@ -252,11 +282,14 @@ export default function EmailForm() {
             <Carousel setApi={setPreviewCarousel}>
               <CarouselContent>
                 {csvData.map((data, index) => (
-                  <CarouselItem key={index}>
+                  <CarouselItem key={index} className="relative">
                     <div
                       className="text-left bg-muted p-5 rounded-lg"
                       dangerouslySetInnerHTML={{ __html: fillEmailWithCsvData(emailHTML, data) }}
                     ></div>
+                    <p className="absolute z-10 right-0 top-0 text-white border bg-secondary-foreground px-2 py-1 rounded-md text-xs">
+                      to: {data[emailKey] ?? "UNKNOWN <Choose an email column above>"}
+                    </p>
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -292,6 +325,9 @@ export default function EmailForm() {
           onClick={() => {
             if (!csv) return alert("Please upload a CSV file");
             if (!emailForm.formState.isValid) return alert("Please fill in the email settings");
+            if (csvData.length === 0) return alert("Please upload a non-empty CSV file");
+            if (!Object.keys(csvData[0]).includes(emailKey))
+              return alert("Please select an email column");
 
             fetch(`/.netlify/functions/email`, {
               method: "POST",
