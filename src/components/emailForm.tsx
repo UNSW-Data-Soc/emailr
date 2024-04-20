@@ -10,10 +10,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CKEditor, CKEditorContext } from "@ckeditor/ckeditor5-react";
 import { ClassicEditor } from "@ckeditor/ckeditor5-editor-classic";
 import { Context } from "@ckeditor/ckeditor5-core";
-import { Bold, Italic } from "@ckeditor/ckeditor5-basic-styles";
+import { Bold, Italic, Underline } from "@ckeditor/ckeditor5-basic-styles";
 import { Essentials } from "@ckeditor/ckeditor5-essentials";
 import { Paragraph } from "@ckeditor/ckeditor5-paragraph";
 import { Link, LinkImage } from "@ckeditor/ckeditor5-link";
+import { Font } from "@ckeditor/ckeditor5-font";
 import {
   Image,
   ImageCaption,
@@ -43,6 +44,14 @@ const fillEmailWithCsvData = (emailHTML: string, csvData: Record<string, string>
     return csvData[p1] || match;
   });
   return emailHTMLWithCsvData;
+};
+
+// filter out rows with empty emails
+const filterEmptyEmails = (
+  csvData: Record<string, string>[],
+  emailCol: string
+): Record<string, string>[] => {
+  return csvData.filter((row) => row[emailCol]?.trim().length > 0);
 };
 
 export default function EmailForm() {
@@ -226,6 +235,7 @@ export default function EmailForm() {
                 Paragraph,
                 Bold,
                 Italic,
+                Underline,
                 Link,
                 Image,
                 ImageToolbar,
@@ -234,6 +244,7 @@ export default function EmailForm() {
                 ImageResize,
                 LinkImage,
                 ImageInsertViaUrl,
+                Font,
               ],
               toolbar: {
                 items: [
@@ -242,6 +253,7 @@ export default function EmailForm() {
                   "|",
                   "bold",
                   "italic",
+                  "underline",
                   "|",
                   "link",
                   "|",
@@ -251,6 +263,11 @@ export default function EmailForm() {
                   // "numberedList",
                   // "outdent",
                   // "indent",
+                  "|",
+                  "fontSize",
+                  "fontColor",
+                  "fontBackgroundColor",
+                  "|",
                 ],
               },
               image: {
@@ -283,20 +300,25 @@ export default function EmailForm() {
           <>
             <Carousel setApi={setPreviewCarousel}>
               <CarouselContent>
-                {csvData.map((data, index) => (
-                  <CarouselItem key={index} className="relative">
-                    <div
-                      className="text-left bg-muted p-5 rounded-lg"
-                      dangerouslySetInnerHTML={{ __html: fillEmailWithCsvData(emailHTML, data) }}
-                    ></div>
-                    <p className="absolute z-10 right-0 top-0 text-white border bg-secondary-foreground px-2 py-1 rounded-md text-xs">
-                      to: {data[emailKey] ?? "UNKNOWN <Choose an email column above>"}
-                    </p>
-                  </CarouselItem>
-                ))}
+                {csvData.map(
+                  (data, index) =>
+                    data[emailKey]?.trim().length > 0 && (
+                      <CarouselItem key={index} className="relative">
+                        <div
+                          className="text-left bg-muted p-5 rounded-lg"
+                          dangerouslySetInnerHTML={{
+                            __html: fillEmailWithCsvData(emailHTML, data),
+                          }}
+                        ></div>
+                        <p className="absolute z-10 right-0 top-0 text-white border bg-secondary-foreground px-2 py-1 rounded-md text-xs">
+                          to: {data[emailKey] ?? "UNKNOWN <Choose an email column above>"}
+                        </p>
+                      </CarouselItem>
+                    )
+                )}
               </CarouselContent>
               <p className="text-slate-400 pt-2">
-                Email {previewCurrent} of {csvData.length}
+                Email {previewCurrent} of {filterEmptyEmails(csvData, emailKey).length}
               </p>
             </Carousel>
             <div className="absolute top-3 right-3 flex flex-row gap-2">
@@ -342,7 +364,7 @@ export default function EmailForm() {
                 subject: emailForm.getValues("subject"),
                 fromEmail: emailForm.getValues("fromEmail"),
                 html: emailHTML,
-                csvData: csvData,
+                csvData: filterEmptyEmails(csvData, emailKey),
                 emailCol: emailKey,
                 fromPassword: emailForm.getValues("password"),
               }),
