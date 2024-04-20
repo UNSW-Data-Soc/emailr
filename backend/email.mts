@@ -33,6 +33,7 @@ export default async (req: Request) => {
   const transporter = nodemailer.createTransport(transportOptions);
 
   csv.forEach((row) => {
+    if (row[emailCol].trim().length === 0) return;
     const emailHTML = fillEmailWithCsvData(html, row);
 
     void transporter.sendMail({
